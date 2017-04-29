@@ -1,46 +1,65 @@
+from Grid import *
+from random import randint
+import math
+
 class Decision:
-    # Find the child state with lowest utility value
-    def minimize(self, state, alpha, beta):
-        # return {"state": state, "util": util}
-        if self.terminal_test(state):
-            return None, self.evaluate(state)
-        minChild = None
-        minUtil = float("inf")
-        for child in state.children():
-            util = self.maximize(child, alpha, beta)
-            if util < minUtil:
-                minChild = child
-                minUtil = util
+
+    def evaluate(self, grid):
+        count = 17 * grid.tile[0][0] + 9 * grid.tile[0][1] + 5 * grid.tile[0][2] + 3 * grid.tile[0][3]
+        count += 8 * grid.tile[1][0] + 4 * grid.tile[1][1] + 2 * grid.tile[1][2]
+        count += 3 * grid.tile[2][0] + 1 * grid.tile[2][1]
+        return count
+        # return state.getMaxTile()
+
+    def getNextMove(self, state):
+        move = self.maximize(state, -math.inf, - math.inf, math.inf, depth=4)[0]
+        # return best move found
+        moves = state.getAvailableMoves()
+        if move in moves:
+            return move
+        return moves[randint(0, len(moves) - 1)]
+
+    def minimize(self, state, maxMove, alpha, beta, depth):
+        stateClone = state.cloneGrid()
+        result = (None,math.inf)
+        minMove = None
+        minUtil = math.inf
+        for pos in state.getAvailableTiles():
+            stateClone.insertTile(pos, 2)
+            tempUtil = self.maximize(stateClone, maxMove, alpha, beta, depth - 1)
+            stateClone.setTileValue(pos, 0)
+            if tempUtil[1] < minUtil:
+                minMove = tempUtil[0]
+                minUtil = tempUtil[1]
             if minUtil <= alpha:
                 break
             if minUtil < beta:
                 beta = minUtil
-        return {"minChild": minChild, "minUtil": minUtil}
+        return minMove, minUtil
 
-    def terminal_test(self, state):
-        return
+    def maximize(self, state, minMove, alpha, beta, depth):
+        if depth == 0:
+            return self.evaluate(state), minMove
 
-    # Find the child state with highest utility value
-    def maximize(self, state, alpha, beta):
-        # return {"state": state, "util": util}
-        if self.terminal_test(state):
-            return None, self.evaluate(state)
-        maxChild = None
-        maxUtil = float("-inf")
-        for child in state.children():
-            util = self.minimize(child, alpha, beta)
-            if util > maxUtil:
-                maxChild = child
-                maxUtil = util
+        result = (None, -math.inf)
+        maxMove = result[0]
+        maxUtil = result[1]
+        stateClone = state.cloneGrid()
+        for move in stateClone.getAvailableMoves():
+            stateClone.move(move)
+            tempUtil = self.minimize(stateClone, move, alpha, beta, depth - 1)[1]
+            if tempUtil > maxUtil:
+                maxMove = move
+                maxUtil = tempUtil
             if maxUtil >= beta:
                 break
             if maxUtil > alpha:
                 alpha = maxUtil
-        return {"maxChild": maxChild, "maxUtil": maxUtil}
+        return maxMove, maxUtil
 
-    def evaluate(self, state):
-        return 0
 
-    def decision(self, state):
-        child = self.maximize(state, float("-inf"), float("inf")["maxChild"])
-        return child
+# initialization: alpha = -inf, beta = inf
+# x = Grid()
+#
+# y = Decision()
+# print(y.evaluate(x))

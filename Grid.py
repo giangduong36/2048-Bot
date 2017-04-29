@@ -1,3 +1,7 @@
+import random
+from copy import deepcopy
+from Decision import *
+
 colorMap = {
     0: "2;32;47",
     2: "1;33;41",
@@ -10,18 +14,16 @@ colorMap = {
     256: "0;32;46",
     512: "1;34;42",
     1024: "1;33;41",
-    # 2048: 43,
-    # 4096: 103,
-    # 8192: 45,
-    # 16384: 105,
-    # 32768: 41,
-    # 65536: 101,
+    2048: "0;32;46",
+    # 4096: ,
+    # 8192: ,
 }
+
 
 class Grid:
     def __init__(self, size=4):
         self.size = size
-        self.tile = [[2] * self.size for i in range(self.size)]
+        self.tile = [[0] * self.size for i in range(self.size)]
 
     def gridSize(self):
         return self.size
@@ -38,91 +40,83 @@ class Grid:
             if i % 4 != -1:
                 print("")
 
+    # Insert new tile at a position
     def insertTile(self, pos, value):
-        return
+        self.tile[pos[0]][pos[1]] = value
 
     def setTileValue(self, pos, value):
-        return
+        self.tile[pos[0]][pos[1]] = value
 
     def getAvailableTiles(self):
-        return
+        emptyPos = []
+        for x in range(self.size):
+            for y in range(self.size):
+                if self.tile[x][y] == 0:
+                    emptyPos.append([x, y])
+        return emptyPos
 
     def getMaxTile(self):
-        return
+        maxTile = 0
+        for x in range(self.size):
+            for y in range(self.size):
+                if self.getTile(x, y) > maxTile:
+                    maxTile = self.getTile(x, y)
+        return maxTile
+
+    def cloneGrid(self):
+        clone = Grid()
+        clone.size = self.size
+        clone.tile = deepcopy(self.tile)
+        return clone
 
     def isEmpty(self, pos):
-        return
+        return self.tile[pos[0]][pos[1]] == 0
 
     def move(self, dir):
         return
 
-    def moveUpDown(self, down = False):
-        r = range(self.size -1, -1, -1) if down else range(self.size)
-
-        moved = False
-
+    def moveUpDown(self, down=False):
+        if down:
+            r = range(self.size - 1, -1, -1)
+        else:
+            r = range(self.size)
         for j in range(self.size):
             cells = []
-
             for i in r:
                 cell = self.tile[i][j]
-
                 if cell != 0:
                     cells.append(cell)
-
             self.mergeTiles(cells)
-
             for i in r:
-                value = cells.pop(0) if cells else 0
-
-                if self.tile[i][j] != value:
-                    moved = True
-
+                if cells:
+                    value = cells.pop(0)
+                else:
+                    value = 0
                 self.tile[i][j] = value
 
-        return moved
+        return
 
     def moveLeftRight(self, right=True):
-        # if right:
-        #     direction = (self.size - 1, -1, -1)
-        # else:
-        #     direction = range(self.size)
-        # cells = []
-        # for x in range(self.size):
-        #     # temp = []
-        #     for y in range(self.size):
-        #         cells.append(self.tile[x][y])
-        #     # cells.append(temp)
-        #
-        # cells =
-        # self.mergeTiles(cells)
-        # print(cells)
-        # return
-
-        r = range(self.size - 1, -1, -1) if right else range(self.size)
-
-        moved = False
+        if right:
+            r = range(self.size - 1, -1, -1)
+        else:
+            r = range(self.size)
 
         for i in range(self.size):
             cells = []
-
             for j in r:
                 cell = self.tile[i][j]
-
                 if cell != 0:
                     cells.append(cell)
-
             self.mergeTiles(cells)
-
             for j in r:
-                value = cells.pop(0) if cells else 0
-
-                if self.tile[i][j] != value:
-                    moved = True
-
+                if cells:
+                    value = cells.pop(0)
+                else:
+                    value = 0
                 self.tile[i][j] = value
 
-        return moved
+        return
 
     def mergeTiles(self, cells):
         if len(cells) <= 1:
@@ -135,36 +129,86 @@ class Grid:
             i += 1
         return cells
 
+    #
     def canMove(self, direction):
-        return
+        clone = self.cloneGrid()
+        if direction == 1:
+            clone.moveLeftRight(True)
+        elif direction == -1:
+            clone.moveLeftRight(False)
+        elif direction == 10:
+            clone.moveUpDown(False)
+        else:
+            clone.moveUpDown(True)
+        if clone.tile == self.tile:
+            return False
+        else:
+            return True
 
-    def getAvailableMoves(self, direction):
-        return
+    def getAvailableMoves(self):
+        moveList = []
+        for dir in (1,-1,10,-10):
+            if self.canMove(dir):
+                moveList.append(dir)
+        return moveList
 
-    def crossBound(self, pos):
-        return
-
-    def getCellValue(self):
-        return
-
-    def endGame(self):
-        for x in range (self.size):
-            for y in range (self.size):
-                if self.tile[x][y] == 2048:
+    def wonGame(self):
+        for x in range(self.size):
+            for y in range(self.size):
+                if self.tile[x][y] >= 2048:
                     return True
-        return False
+
+    def loseGame(self):
+        if len(self.getAvailableMoves()) == 0:
+            return True
+
+    # def run(self):
+    #     available = self.getAvailableTiles()
+    #     print(available)
+    #     i = random.randint(0, len(available) - 1)
+    #     self.insertTile(available[i], random.randint(1, 2) * 2)
+    #     self.displayGrid()
+
 
 if __name__ == '__main__':
     x = Grid()
-    while not x.endGame():
-        x.displayGrid()
-        move = input('Enter move: ')
-        if move == "l":
-            x.moveLeftRight(False)
-        elif move == "r":
-            x.moveLeftRight(True)
-        elif move == "u":
-            x.moveUpDown(False)
-        elif move == "d":
-            x.moveUpDown(True)
-
+    ai = Decision()
+    available = x.getAvailableTiles()
+    i = random.randint(0, len(available) - 1)
+    # x.insertTile(available[i], random.randint(1, 2) * 2)
+    x.insertTile(available[i], 2)
+    while not (x.wonGame() or x.loseGame()):
+        available = x.getAvailableTiles()
+        i = random.randint(0, len(available) - 1)
+        # x.insertTile(available[i], random.randint(1, 2) * 2)
+        x.insertTile(available[i], 2)
+        while not (x.loseGame()):
+            x.displayGrid()
+            print(x.getAvailableMoves())
+            move = ai.getNextMove(x)
+        # move = input('Enter move: ')
+        #
+        # if move == "l":
+        #     x.moveLeftRight(False)
+        # elif move == "r":
+        #     x.moveLeftRight(True)
+        # elif move == "u":
+        #     x.moveUpDown(False)
+        # elif move == "d":
+        #     x.moveUpDown(True)
+        # else:
+        #     break
+            if move == -1:
+                x.moveLeftRight(False)
+            elif move == 1:
+                x.moveLeftRight(True)
+            elif move == 10:
+                x.moveUpDown(False)
+            elif move == -10:
+                x.moveUpDown(True)
+            break
+    x.displayGrid()
+    #
+    # dic = [1,2,3,4]
+    # for i in dic:
+    #     print(i)
