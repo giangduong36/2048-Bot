@@ -1,7 +1,8 @@
-import random
+from random import randint
 from copy import deepcopy
-from Decision import *
+
 import time
+
 colorMap = {
     0: "2;32;47",
     2: "1;33;41",
@@ -60,25 +61,36 @@ class Grid:
                     maxTile = self.getTile(x, y)
         return maxTile
 
+    def getNeighbors(self, x, y):
+        neighbor = []
+        if x < self.size - 1:
+            neighbor.append([x + 1, y])
+        if x > 0:
+            neighbor.append([x - 1, y])
+        if y > 0:
+            neighbor.append([x, y - 1])
+        if y < self.size - 1:
+            neighbor.append([x, y + 1])
+        return neighbor
+
     def cloneGrid(self):
         clone = Grid()
         clone.size = self.size
         clone.tile = deepcopy(self.tile)
         return clone
 
-    def isEmpty(self, pos):
-        return self.tile[pos[0]][pos[1]] == 0
+    # def isEmpty(self, pos):
+    #     return self.tile[pos[0]][pos[1]] == 0
 
     def move(self, dir):
-        if dir == -1:
-            x.moveLeftRight(False)
-        elif dir == 1:
-            x.moveLeftRight(True)
+        if dir == 1:
+            self.moveLeftRight(True)
+        elif dir == -1:
+            self.moveLeftRight(False)
         elif dir == 10:
-            x.moveUpDown(False)
-        elif dir == -10:
-            x.moveUpDown(True)
-        return
+            self.moveUpDown(False)
+        else:
+            self.moveUpDown(True)
 
     def moveUpDown(self, down=False):
         if down:
@@ -125,7 +137,6 @@ class Grid:
                         self.tile[i][j] = 0
         return
 
-
     def mergeTiles(self, tiles):
         if len(tiles) <= 1:
             return tiles
@@ -170,53 +181,68 @@ class Grid:
         if len(self.getAvailableMoves()) == 0:
             return True
 
-            # def run(self):
-            #     available = self.getAvailableTiles()
-            #     print(available)
-            #     i = random.randint(0, len(available) - 1)
-            #     self.insertTile(available[i], random.randint(1, 2) * 2)
-            #     self.displayGrid()
+    def scores(self):
+        scoreList = {}
+        for x in range(self.size):
+            for y in range(self.size):
+                val = self.getTile(x, y)
+                if val in scoreList:
+                    scoreList[val] += 1
+                else:
+                    scoreList[val] = 1
+        sortList = sorted(scoreList)
+        scoreListFinal = {}
+        for val in sortList:
+            scoreListFinal[val] = scoreList[val]
+        return scoreListFinal
+
+    # Add 2 90% of the time, add 4 10% of the time
+    def computerAddTile(self):
+        available = self.getAvailableTiles()
+        i = randint(0, len(available) - 1)
+        # val = randint(1, 10) < 9 and 2 or 4;
+        val = 2
+        self.setTileValue(available[i], val)
 
 
 if __name__ == '__main__':
-    result =[]
+    result = []
     start = time.time()
-    for i in range(5):
-        x = Grid()
-        ai = Decision()
+    # for i in range(10):
+    x = Grid()
+    # ai = Decision()
+    available = x.getAvailableTiles()
+    i = randint(0, len(available) - 1)
+    # x.insertTile(available[i], random.randint(1, 2) * 2)
+    x.setTileValue(available[i], 2)
+    x.displayGrid()
+    print(x.getNeighbors(0, 1))
+    while (x.loseGame()):
         available = x.getAvailableTiles()
-        i = random.randint(0, len(available) - 1)
+        i = randint(0, len(available) - 1)
         # x.insertTile(available[i], random.randint(1, 2) * 2)
         x.setTileValue(available[i], 2)
-
-        while not ( x.loseGame()):
-            available = x.getAvailableTiles()
-            i = random.randint(0, len(available) - 1)
-            # x.insertTile(available[i], random.randint(1, 2) * 2)
-            x.setTileValue(available[i], 2)
-            # print("COMPUTER TURN ")
-            # x.displayGrid()
-            if not (x.loseGame()):
-                move = ai.getNextMove(x)
-                print(move)
-                # move = input('Enter move: ')
-                #
-                # if move == "l":
-                #     x.moveLeftRight(False)
-                # elif move == "r":
-                #     x.moveLeftRight(True)
-                # elif move == "u":
-                #     x.moveUpDown(False)
-                # elif move == "d":
-                #     x.moveUpDown(True)
-                # else:
-                #     break
-                x.move(move)
-
-                print("PLAYER TURN: ", move)
-                x.displayGrid()
-        result.append(x.getMaxTile())
+        # print("COMPUTER TURN ")
+        # x.displayGrid()
+        if not (x.loseGame()):
+            move = ai.getMove(x)
+            # move = input('Enter move: ')
+            #
+            # if move == "l":
+            #     x.moveLeftRight(False)
+            # elif move == "r":
+            #     x.moveLeftRight(True)
+            # elif move == "u":
+            #     x.moveUpDown(False)
+            # elif move == "d":
+            #     x.moveUpDown(True)
+            # else:
+            #     break
+            x.move(move)
+            print("PLAYER TURN: ", move)
+            x.displayGrid()
+    result.append(x.getMaxTile())
 
     end = time.time()
     print(result)
-    print("Time: ", end-start)
+    print("Time: ", (end - start) / 5)
