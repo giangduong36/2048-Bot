@@ -1,3 +1,5 @@
+from Grid import *
+
 class MainGame:
     def checkGameOver(self, grid): pass
 
@@ -7,5 +9,5 @@ class MainGame:
 
 
 if __name__ == '__main__':
-    MainGame.main()
-
+    game = MainGame()
+    game.main()
