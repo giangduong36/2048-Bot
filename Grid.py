@@ -1,38 +1,66 @@
 from random import randint
 from copy import deepcopy
 
-import time
-
+# Assign colors for different values when printing the game in console
 colorMap = {
-    0: "2;32;47",
-    2: "1;33;41",
-    4: "2;30;44",
-    8: "1;34;42",
-    16: "0;32;46",
-    32: "1;33;45",
-    64: "0;32;46",
-    128: "2;30;44",
-    256: "0;32;46",
-    512: "1;34;42",
-    1024: "1;33;41",
-    2048: "0;32;46",
-    4096: "1;32;46",
-    8192: "1;34;42",
+    0: "4;32;47",
+    2: "4;33;41",
+    4: "4;33;44",
+    8: "4;33;45",
+    16: "4;33;44",
+    32: "4;35;41",
+    64: "4;34;42",
+    128: "4;33;44",
+    256: "4;33;41",
+    512: "4;34;42",
+    1024: "4;33;41",
+    2048: "4;33;46",
+    4096: "4;33;43",
+    8192: "4;34;42",
 }
 
 
 class Grid:
+    """This class represents a 4x4 grid of 2048 game"""
+
     def __init__(self, size=4):
         self.size = size
         self.tile = [[0] * self.size for i in range(self.size)]
 
     def gridSize(self):
+        """Return the number of tiles per row in the grid"""
         return self.size
 
     def getTile(self, x, y):
+        """Get a tile at a specific position"""
         return self.tile[x][y]
 
+    def getTileByRow(self):
+        """Get a list of all tiles in row order"""
+        listTile = []
+        for i in range(self.size):
+            if i % 2 == 0:
+                for j in range(self.size):
+                    listTile.append(self.getTile(i, j))
+            else:
+                for j in range(self.size - 1, -1, -1):
+                    listTile.append(self.getTile(i, j))
+        return listTile
+
+    def getTileByCol(self):
+        """Get a list of all tiles in col order"""
+        listTile = []
+        for i in range(self.size):
+            if i % 2 == 0:
+                for j in range(self.size):
+                    listTile.append(self.getTile(j, i))
+            else:
+                for j in range(self.size - 1, -1, -1):
+                    listTile.append(self.getTile(j, i))
+        return listTile
+
     def displayGrid(self):
+        """Print the grid to console"""
         for i in range(self.size):
             for j in range(self.size):
                 v = self.tile[i][j]
@@ -41,11 +69,12 @@ class Grid:
             if i % 4 != -1:
                 print("")
 
-    # Insert new tile at a position
     def setTileValue(self, pos, value):
+        """Set a tile to a value"""
         self.tile[pos[0]][pos[1]] = value
 
     def getAvailableTiles(self):
+        """Get positions of empty tiles in the grid"""
         emptyPos = []
         for x in range(self.size):
             for y in range(self.size):
@@ -54,6 +83,7 @@ class Grid:
         return emptyPos
 
     def getMaxTile(self):
+        """Get the maximum value of tiles in the grid"""
         maxTile = 0
         for x in range(self.size):
             for y in range(self.size):
@@ -61,38 +91,31 @@ class Grid:
                     maxTile = self.getTile(x, y)
         return maxTile
 
-    def getNeighbors(self, x, y):
-        neighbor = []
-        if x < self.size - 1:
-            neighbor.append([x + 1, y])
-        if x > 0:
-            neighbor.append([x - 1, y])
-        if y > 0:
-            neighbor.append([x, y - 1])
-        if y < self.size - 1:
-            neighbor.append([x, y + 1])
-        return neighbor
-
     def cloneGrid(self):
+        """Clone the grid to work on a copy"""
         clone = Grid()
         clone.size = self.size
         clone.tile = deepcopy(self.tile)
         return clone
 
-    # def isEmpty(self, pos):
-    #     return self.tile[pos[0]][pos[1]] == 0
-
     def move(self, dir):
+        """Move the grid in a direction
+        Direction 1 is the Right direction, 
+        Direction -1 is the Left direction, 
+        Direction 10 is the Up direction, 
+        Direction -10 is the Down direction, 
+        """
         if dir == 1:
             self.moveLeftRight(True)
         elif dir == -1:
             self.moveLeftRight(False)
         elif dir == 10:
             self.moveUpDown(False)
-        else:
+        elif dir == -10:
             self.moveUpDown(True)
 
     def moveUpDown(self, down=False):
+        """Move the grid up or down and merge tiles"""
         if down:
             r = range(self.size - 1, -1, -1)
         else:
@@ -115,6 +138,7 @@ class Grid:
         return
 
     def moveLeftRight(self, right=True):
+        """Move the grid left or right and merge tiles"""
         if right:
             r = range(self.size - 1, -1, -1)
         else:
@@ -138,6 +162,7 @@ class Grid:
         return
 
     def mergeTiles(self, tiles):
+        """Merge a list of tiles. If two adjacent tiles are equal in values, they are merged together"""
         if len(tiles) <= 1:
             return tiles
         i = 0
@@ -148,8 +173,8 @@ class Grid:
             i += 1
         return tiles
 
-    #
     def canMove(self, direction):
+        """Check if there is any move left for the grid"""
         clone = self.cloneGrid()
         if direction == 1:
             clone.moveLeftRight(True)
@@ -165,6 +190,7 @@ class Grid:
             return True
 
     def getAvailableMoves(self):
+        """Get all the available moves for the grid"""
         moveList = []
         for dir in (1, -1, 10, -10):
             if self.canMove(dir):
@@ -172,16 +198,17 @@ class Grid:
         return moveList
 
     def wonGame(self):
-        for x in range(self.size):
-            for y in range(self.size):
-                if self.tile[x][y] >= 2048:
-                    return True
+        """Check if AI/User has won the game by getting a tile >= 2048"""
+        if self.getMaxTile() >= 2048:
+            return True
 
     def loseGame(self):
+        """Check if AI/User has lost the game"""
         if len(self.getAvailableMoves()) == 0:
             return True
 
     def scores(self):
+        """Return the score distribution of a grid in a sorted order"""
         scoreList = {}
         for x in range(self.size):
             for y in range(self.size):
@@ -196,53 +223,9 @@ class Grid:
             scoreListFinal[val] = scoreList[val]
         return scoreListFinal
 
-    # Add 2 90% of the time, add 4 10% of the time
     def computerAddTile(self):
+        """Computer adds 2 90% of the time, add 4 10% of the time"""
         available = self.getAvailableTiles()
         i = randint(0, len(available) - 1)
-        # val = randint(1, 10) < 9 and 2 or 4;
-        val = 2
+        val = randint(1, 10) < 9 and 2 or 4
         self.setTileValue(available[i], val)
-
-
-if __name__ == '__main__':
-    result = []
-    start = time.time()
-    # for i in range(10):
-    x = Grid()
-    # ai = Decision()
-    available = x.getAvailableTiles()
-    i = randint(0, len(available) - 1)
-    # x.insertTile(available[i], random.randint(1, 2) * 2)
-    x.setTileValue(available[i], 2)
-    x.displayGrid()
-    print(x.getNeighbors(0, 1))
-    while (x.loseGame()):
-        available = x.getAvailableTiles()
-        i = randint(0, len(available) - 1)
-        # x.insertTile(available[i], random.randint(1, 2) * 2)
-        x.setTileValue(available[i], 2)
-        # print("COMPUTER TURN ")
-        # x.displayGrid()
-        if not (x.loseGame()):
-            move = ai.getMove(x)
-            # move = input('Enter move: ')
-            #
-            # if move == "l":
-            #     x.moveLeftRight(False)
-            # elif move == "r":
-            #     x.moveLeftRight(True)
-            # elif move == "u":
-            #     x.moveUpDown(False)
-            # elif move == "d":
-            #     x.moveUpDown(True)
-            # else:
-            #     break
-            x.move(move)
-            print("PLAYER TURN: ", move)
-            x.displayGrid()
-    result.append(x.getMaxTile())
-
-    end = time.time()
-    print(result)
-    print("Time: ", (end - start) / 5)
